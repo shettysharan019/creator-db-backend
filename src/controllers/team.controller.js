@@ -41,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
     savedUser.refreshToken = refreshToken;
     await savedUser.save();
 
-    // Return response (exclude password and refresh token)
+    // Return response (excluding password and refresh token)
     const { _id, name: savedName, email: savedEmail, role: savedRole } = savedUser;
     res.status(201).json({
         message: "User registered successfully.",
