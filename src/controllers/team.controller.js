@@ -1,12 +1,11 @@
 import { TeamMember } from "../models/team.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
 
 // Register user
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password, role } = req.body;
-
+    const { name, email, password, role } = req.body
+    
     // Validate input data
     if (!name || !email || !password) {
         return res.status(400).json({ message: "All fields are required." });
@@ -44,14 +43,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Return response (exclude password and refresh token)
     const { _id, name: savedName, email: savedEmail, role: savedRole } = savedUser;
-    return res.status(201).json(
-        new ApiResponse(200, savedUser, "User registered successfully.", {
-            _id,
-            name: savedName,
-            email: savedEmail,
-            role: savedRole,
-        }),
-    );
+    res.status(201).json({
+        message: "User registered successfully.",
+        user: { _id, name: savedName, email: savedEmail, role: savedRole },
+        tokens: { accessToken, refreshToken },
+    });
 });
 
 export { registerUser };
