@@ -1,7 +1,7 @@
 import mongoose, {Schema} from "mongoose";
 
 // Define the Commercials Schema
-const commercialsSchema = new Schema(
+const commercialSchema = new Schema(
     {
         creator: {
             type: Schema.Types.ObjectId,
@@ -28,4 +28,4 @@ const commercialsSchema = new Schema(
     { timestamps: true }
 );
 
-export const Commercials = mongoose.model("Commercials", commercialsSchema);
+export const Commercial = mongoose.model('Commercial', commercialSchema);
