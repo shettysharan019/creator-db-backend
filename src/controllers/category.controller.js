@@ -1,37 +1,98 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { Category } from "../models/category.model.js";
+import { Category, PREDEFINED_CATEGORIES } from "../models/category.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-// Add a new category
-const addCategory = asyncHandler(async (req, res) => {
-    const { name, isCustom } = req.body;
-
-    const newCategory = await Category.create({ name, isCustom });
-    res.status(201).json(newCategory);
+const resetCategories = asyncHandler(async (req, res) => {
+    // Drop the collection entirely
+    await Category.collection.drop();
+    
+    // Recreate indexes
+    await Category.collection.createIndex(
+        { category_name: 1 }, 
+        { unique: true }
+    );
+    
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Categories reset successfully")
+    );
 });
 
-// Get all categories
+let categoriesInitialized = false;
+
+const initializePredefinedCategories = async () => {
+    try {
+        if (categoriesInitialized) return;
+
+        const existingCategories = await Category.countDocuments();
+        console.log("Existing categories count:", existingCategories);
+
+        if (existingCategories === 0) {
+            const categoriesToInsert = PREDEFINED_CATEGORIES.map(name => ({
+                category_name: name,
+                created_by: null
+            }));
+
+            const insertedCategories = await Category.insertMany(categoriesToInsert);
+            console.log(`Initialized ${insertedCategories.length} predefined categories`);
+            categoriesInitialized = true;
+        }
+    } catch (error) {
+        console.error("Error initializing categories:", error);
+        throw error;
+    }
+};
+
 const getCategories = asyncHandler(async (req, res) => {
-    const categories = await Category.find();
-    res.status(200).json(categories);
+    await initializePredefinedCategories();
+    
+    const categories = await Category.find({}).lean();
+    console.log(`Retrieved ${categories.length} categories`);
+
+    return res.status(200).json(
+        new ApiResponse(200, categories, "Categories fetched successfully")
+    );
 });
 
-// Update a category by ID
-const updateCategory = asyncHandler(async (req, res) => {
-    const updatedCategory = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!updatedCategory) {
-        throw new ApiError(404, "Category not found.");
+const createCategory = asyncHandler(async (req, res) => {
+    const { category_name } = req.body;
+
+    if (!category_name?.trim()) {
+        throw new ApiError(400, "Category name is required");
     }
-    res.status(200).json(updatedCategory);
-});
 
-// Delete a category by ID
-const deleteCategory = asyncHandler(async (req, res) => {
-    const deletedCategory = await Category.findByIdAndDelete(req.params.id);
-    if (!deletedCategory) {
-        throw new ApiError(404, "Category not found.");
+    // Check if category exists in predefined list
+    if (PREDEFINED_CATEGORIES.includes(category_name)) {
+        throw new ApiError(409, "Category already exists in predefined list");
     }
-    res.status(204).json(null);
+
+    // Check if category already exists in database
+    const existingCategory = await Category.findOne({ category_name });
+    if (existingCategory) {
+        throw new ApiError(409, "Category already exists");
+    }
+
+    const category = await Category.create({
+        category_name,
+        created_by: req.user._id
+    });
+
+    return res.status(201).json(
+        new ApiResponse(201, category, "Category created successfully")
+    );
 });
 
-export { addCategory, getCategories, updateCategory, deleteCategory };
+const deleteAllCategories = asyncHandler(async (req, res) => {
+    await Category.deleteMany({});
+    
+    return res.status(200).json(
+        new ApiResponse(200, {}, "All categories deleted successfully")
+    );
+});
+
+export {
+    resetCategories,
+    getCategories,
+    createCategory,
+    deleteAllCategories
+};

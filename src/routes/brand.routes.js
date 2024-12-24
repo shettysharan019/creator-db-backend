@@ -1,20 +1,26 @@
 import { Router } from "express";
-import { 
-    addBrand, 
-    getBrands, 
-    getBrandById, 
-    updateBrand, 
-    deleteBrand 
+import {
+    createBrand,
+    getBrands,
+    getBrandsByCreator,
+    updateBrand,
+    deleteBrand
 } from "../controllers/brand.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Secured routes
-router.route("/").post(verifyJWT, addBrand).get(verifyJWT, getBrands);
+router.use(verifyJWT);
+
+router.route("/")
+    .post(createBrand)
+    .get(getBrands);
+
+router.route("/creator/:creatorId")
+    .get(getBrandsByCreator);
+
 router.route("/:id")
-    .get(verifyJWT, getBrandById)
-    .patch(verifyJWT, updateBrand)
-    .delete(verifyJWT, deleteBrand);
+    .patch(updateBrand)
+    .delete(deleteBrand);
 
 export default router;

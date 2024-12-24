@@ -1,16 +1,17 @@
 import { Router } from "express";
-import { 
-    addCategory, 
-    getCategories, 
-    updateCategory, 
-    deleteCategory 
-} from "../controllers/category.controller.js";
+import { resetCategories, createCategory, getCategories, deleteAllCategories } from "../controllers/category.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Secured routes
-router.route("/").post(verifyJWT, addCategory).get(verifyJWT, getCategories);
-router.route("/:id").patch(verifyJWT, updateCategory).delete(verifyJWT, deleteCategory);
+router.use(verifyJWT);
+
+router.route("/reset")
+    .post(verifyJWT, resetCategories);
+
+router.route("/")
+    .post(createCategory)
+    .get(getCategories)
+    .delete(verifyJWT, deleteAllCategories);
 
 export default router;

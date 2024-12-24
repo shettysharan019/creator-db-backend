@@ -1,20 +1,25 @@
 import { Router } from "express";
-import { 
-    addCreator, 
-    getCreators, 
-    getCreatorById, 
-    updateCreator, 
-    deleteCreator 
+import {
+    addCreator,
+    getCreators,
+    getCreatorById,
+    updateCreator,
+    deleteCreator
 } from "../controllers/creator.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Secured routes
-router.route("/").post(verifyJWT, addCreator).get(verifyJWT, getCreators);
+// All routes are protected with JWT authentication
+router.use(verifyJWT);
+
+router.route("/")
+    .post(addCreator)
+    .get(getCreators);
+
 router.route("/:id")
-    .get(verifyJWT, getCreatorById)
-    .patch(verifyJWT, updateCreator)
-    .delete(verifyJWT, deleteCreator);
+    .get(getCreatorById)
+    .patch(updateCreator)
+    .delete(deleteCreator);
 
 export default router;

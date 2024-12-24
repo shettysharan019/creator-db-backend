@@ -1,39 +1,46 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const categorySchema = new Schema(
-    {
-        category_name: {
-            type: String,
-            required: [true, "Category name is required"],
-            unique: true,
-            trim: true,
-            minLength: [2, "Category name must be at least 2 characters"],
-            maxLength: [50, "Category name cannot exceed 50 characters"],
-            index: true
-        },
-        created_by: {
-            type: Schema.Types.ObjectId,
-            ref: "TeamMember",
-            required: [true, "Creator is required"],
-            index: true
-        },
-        description: {
-            type: String,
-            trim: true,
-            maxLength: [200, "Description cannot exceed 200 characters"]
-        },
-        is_active: {
-            type: Boolean,
-            default: true
+const PREDEFINED_CATEGORIES = [
+    "Artist",
+    "Musician/band",
+    "Blogger",
+    "Clothing (Brand)",
+    "Community",
+    "Digital creator",
+    "Education",
+    "Entrepreneur",
+    "Health/beauty",
+    "Editor",
+    "Writer",
+    "Personal blog",
+    "Product/service",
+    "Gamer",
+    "Restaurant",
+    "Beauty, cosmetic & personal care",
+    "Grocery Store",
+    "Photographer",
+    "Shopping & retail",
+    "Video creator"
+];
+
+const categorySchema = new Schema({
+    category_name: {
+        type: String,
+        required: [true, "Category name is required"],
+        unique: true,
+        trim: true,
+        validate: {
+            validator: function(v) {
+                return v && v.length > 0;
+            },
+            message: "Category name cannot be empty"
         }
     },
-    { 
-        timestamps: true,
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true }
+    created_by: {
+        type: Schema.Types.ObjectId,
+        ref: "TeamMember"
     }
-);
-
-categorySchema.index({ category_name: 'text' });
+}, { timestamps: true });
 
 export const Category = mongoose.model("Category", categorySchema);
+export { PREDEFINED_CATEGORIES };

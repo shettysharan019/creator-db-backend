@@ -69,78 +69,87 @@ const registerUser = asyncHandler(async (req, res) => {
 
 // Login user
 const loginUser = asyncHandler(async (req, res) => {
+    // Extract credentials from request body with destructuring
     const { email, password } = req.body;
 
-    // Validate input
-    if (!email && !password) {
-        throw new ApiError(400, "email and password are required.");
+    // Enhanced validation check
+    if (!(email && password)) {
+        throw new ApiError(400, "Both email and password are required");
     }
 
-    // Find user by email
-    const user = await TeamMember.findOne({ email });
+    // Find user with email and explicitly select password field
+    const user = await TeamMember.findOne({ email }).select("+password");
+    
     if (!user) {
-        throw new ApiError(404, "User not found.");
+        throw new ApiError(404, "User does not exist");
     }
 
-    // Check if password is correct
-    const isPasswordCorrect = await user.comparePassword(password);
-    if (!isPasswordCorrect) {
-        throw new ApiError(401, "Invalid email or password.");
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid credentials");
     }
 
-    // Generate access and refresh tokens
+    // Generate tokens
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
+    // Get user object without sensitive fields
     const loggedInUser = await TeamMember.findById(user._id).select("-password -refreshToken");
 
+    // Cookie options
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'strict'
     };
 
-    // Respond with user details and access token
-    const { _id, name, role } = user;
+    // Return response with tokens in cookies and user data
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(
-            200, 
-            {
-                user: { _id, name, email, role },
-                tokens: { accessToken, refreshToken },
-            }, 
-            "User logged in successfully"
-        )
-    );
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json({
+            status: true,
+            data: {
+                user: loggedInUser,
+                accessToken,
+                refreshToken
+            },
+            message: "Login successful"
+        });
 });
 
 // Logout user
 const logoutUser = asyncHandler(async (req, res) => {
+    // Clear refresh token from database
     await TeamMember.findByIdAndUpdate(
         req.user._id, 
         {
-            $set: { 
-                refreshToken: undefined 
-            }
+            $unset: { refreshToken: 1 }
         },
         {
             new: true,
+            runValidators: true
         }
+    );
 
-    )
-
+    // Enhanced cookie options for security
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'strict',
+        path: '/',
+        domain: process.env.DOMAIN || 'localhost'
     };
 
     return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out successfully"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json({
+            status: true,
+            message: "Logged out successfully"
+        });
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {

@@ -1,16 +1,24 @@
 import { Router } from "express";
-import { 
-    addCommercial, 
-    getCommercials, 
-    updateCommercial, 
-    deleteCommercial 
+import {
+    createCommercial,
+    getCommercials,
+    getCommercialById,
+    updateCommercial,
+    deleteCommercial
 } from "../controllers/commercial.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Secured routes
-router.route("/").post(verifyJWT, addCommercial).get(verifyJWT, getCommercials);
-router.route("/:id").patch(verifyJWT, updateCommercial).delete(verifyJWT, deleteCommercial);
+router.use(verifyJWT);
+
+router.route("/")
+    .post(createCommercial)
+    .get(getCommercials);
+
+router.route("/:id")
+    .get(getCommercialById)
+    .patch(updateCommercial)
+    .delete(deleteCommercial);
 
 export default router;
