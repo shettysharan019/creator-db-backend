@@ -4,7 +4,8 @@ import {
     getCreators,
     getCreatorById,
     updateCreator,
-    deleteCreator
+    deleteCreator,
+    searchCreators
 } from "../controllers/creator.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -16,6 +17,9 @@ router.use(verifyJWT);
 router.route("/")
     .post(addCreator)
     .get(getCreators);
+
+router.route("/search")
+    .get(verifyJWT, searchCreators);
 
 router.route("/:id")
     .get(getCreatorById)

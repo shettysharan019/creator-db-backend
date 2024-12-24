@@ -120,10 +120,122 @@ const deleteCreator = asyncHandler(async (req, res) => {
     );
 });
 
+// Search and Filter Creators
+const searchCreators = asyncHandler(async (req, res) => {
+    const {
+        name,
+        category,
+        state,
+        city,
+        manager_name,
+        minFollowers,
+        maxFollowers,
+        services
+    } = req.query;
+
+    const pipeline = [];
+
+    // Match stage for search criteria
+    const matchStage = {};
+
+    if (name) {
+        matchStage.name = { $regex: name, $options: 'i' };
+    }
+
+    if (category) {
+        matchStage.category = new mongoose.Types.ObjectId(category);
+    }
+
+    if (state) {
+        matchStage.state = { $regex: state, $options: 'i' };
+    }
+
+    if (city) {
+        matchStage.city = { $regex: city, $options: 'i' };
+    }
+
+    if (manager_name) {
+        matchStage.manager_name = { $regex: manager_name, $options: 'i' };
+    }
+
+    // Followers range
+    if (minFollowers || maxFollowers) {
+        matchStage.followers = {};
+        if (minFollowers) matchStage.followers.$gte = parseInt(minFollowers);
+        if (maxFollowers) matchStage.followers.$lte = parseInt(maxFollowers);
+    }
+
+    if (Object.keys(matchStage).length > 0) {
+        pipeline.push({ $match: matchStage });
+    }
+
+    // Lookup stages for related data
+    pipeline.push(
+        {
+            $lookup: {
+                from: "categories",
+                localField: "category",
+                foreignField: "_id",
+                as: "categoryInfo"
+            }
+        },
+        {
+            $lookup: {
+                from: "commercials",
+                localField: "_id",
+                foreignField: "creator",
+                as: "commercials"
+            }
+        }
+    );
+
+    // Filter by services if specified
+    if (services) {
+        pipeline.push({
+            $match: {
+                "commercials.service": { 
+                    $regex: services, 
+                    $options: 'i' 
+                }
+            }
+        });
+    }
+
+    // Project stage to format the output
+    pipeline.push({
+        $project: {
+            name: 1,
+            username: 1,
+            profile_link: 1,
+            followers: 1,
+            state: 1,
+            city: 1,
+            manager_name: 1,
+            category: { $arrayElemAt: ["$categoryInfo.category_name", 0] },
+            services: "$commercials.service",
+            email_address: 1,
+            phone_number_1: 1,
+            phone_number_2: 1,
+            created_at: "$createdAt"
+        }
+    });
+
+    const creators = await Creator.aggregate(pipeline);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200, 
+            creators,
+            "Creators fetched successfully"
+        )
+    );
+});
+
 export {
     addCreator,
     getCreators,
     getCreatorById,
     updateCreator,
-    deleteCreator
+    deleteCreator,
+    searchCreators
 };
