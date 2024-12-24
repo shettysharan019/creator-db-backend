@@ -20,6 +20,7 @@ import creatorRouter from "./routes/creator.routes.js";
 import commercialRouter from "./routes/commercial.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import brandRouter from "./routes/brand.routes.js";
+import dashboardRouter from "./routes/dashboard.routes.js";
 
 //router declaration
 app.use("/api/v1/users", userRouter);
@@ -27,6 +28,7 @@ app.use("/api/v1/creators", creatorRouter);
 app.use("/api/v1/commercials", commercialRouter);
 app.use("/api/v1/categories", categoryRouter);
 app.use("/api/v1/brands", brandRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
 
 //http://localhost:8000/api/v1/users/register
 
