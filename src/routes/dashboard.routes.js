@@ -3,7 +3,8 @@ import {
     getCreatorsByCategory,
     getTotalEarnings,
     getCreatorGrowth,
-    getDashboardSummary
+    getDashboardSummary,
+    getMemberDashboardSummary,
 } from "../controllers/dashboard.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -15,5 +16,6 @@ router.route("/summary").get(getDashboardSummary);
 router.route("/creators-by-category").get(getCreatorsByCategory);
 router.route("/earnings").get(getTotalEarnings);
 router.route("/creator-growth").get(getCreatorGrowth);
+router.route("/member-summary").get(verifyJWT, getMemberDashboardSummary);
 
 export default router;

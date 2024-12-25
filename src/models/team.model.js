@@ -68,4 +68,16 @@ teamMemberSchema.methods.generateRefreshToken = function () {
     });
 };
 
+// Add permissions for member role
+teamMemberSchema.methods.hasPermission = function(action) {
+    const memberPermissions = {
+        search: true,
+        add: true,
+        edit: false,
+        delete: false
+    };
+    
+    return this.role === 'admin' ? true : memberPermissions[action];
+};
+
 export const TeamMember = mongoose.model("TeamMember", teamMemberSchema);

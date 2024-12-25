@@ -103,6 +103,9 @@ const loginUser = asyncHandler(async (req, res) => {
         sameSite: 'strict'
     };
 
+    // Add permissions to response
+    const userPermissions = user.hasPermission();
+
     // Return response with tokens in cookies and user data
     return res
         .status(200)
@@ -112,6 +115,7 @@ const loginUser = asyncHandler(async (req, res) => {
             status: true,
             data: {
                 user: loggedInUser,
+                permissions: userPermissions,
                 accessToken,
                 refreshToken
             },

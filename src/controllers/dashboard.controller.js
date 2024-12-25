@@ -127,9 +127,29 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
     );
 });
 
+const getMemberDashboardSummary = asyncHandler(async (req, res) => {
+    const recentCreators = await Creator.find({ owner: req.user._id })
+        .sort("-createdAt")
+        .limit(5)
+        .populate("category");
+
+    const totalCreatorsAdded = await Creator.countDocuments({ owner: req.user._id });
+
+    const summary = {
+        recentCreators,
+        totalCreatorsAdded,
+        userRole: req.user.role
+    };
+
+    return res.status(200).json(
+        new ApiResponse(200, summary, "Member dashboard summary fetched successfully")
+    );
+});
+
 export {
     getCreatorsByCategory,
     getTotalEarnings,
     getCreatorGrowth,
-    getDashboardSummary
+    getDashboardSummary,
+    getMemberDashboardSummary
 };
